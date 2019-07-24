@@ -15,11 +15,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import lombok.extern.java.Log;
 import nju.androidchat.client.ClientMessage;
 import nju.androidchat.client.R;
 import nju.androidchat.client.Utils;
+import nju.androidchat.client.component.ItemImgReceive;
+import nju.androidchat.client.component.ItemImgSend;
 import nju.androidchat.client.component.ItemTextReceive;
 import nju.androidchat.client.component.ItemTextSend;
 import nju.androidchat.client.component.OnRecallMessageRequested;
@@ -27,6 +31,10 @@ import nju.androidchat.client.component.OnRecallMessageRequested;
 @Log
 public class HomeworkActivity extends AppCompatActivity implements Mvp0Contract.View, TextView.OnEditorActionListener, OnRecallMessageRequested {
     private Mvp0Contract.Presenter presenter;
+
+    private static final Pattern pattern = Pattern.compile("!(\\[)(.*?)(\\])(\\()(.*?)(\\))");
+    // String s = "![](http://www.baidu.com)";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,10 +66,20 @@ public class HomeworkActivity extends AppCompatActivity implements Mvp0Contract.
                     for (ClientMessage message : messages) {
                         String text = String.format("%s", message.getMessage());
                         // 如果是自己发的，增加ItemTextSend
+                        Matcher matcher = pattern.matcher(text);
+
                         if (message.getSenderUsername().equals(this.presenter.getUsername())) {
-                            content.addView(new ItemTextSend(this, text, message.getMessageId(), this));
+                            if (matcher.find()) {
+                                content.addView(new ItemImgSend(this, matcher.group(5), message.getMessageId()));
+                            } else {
+                                content.addView(new ItemTextSend(this, text, message.getMessageId(), this));
+                            }
                         } else {
-                            content.addView(new ItemTextReceive(this, text, message.getMessageId()));
+                            if (matcher.find()) {
+                                content.addView(new ItemImgReceive(this, matcher.group(5), message.getMessageId()));
+                            } else {
+                                content.addView(new ItemTextReceive(this, text, message.getMessageId()));
+                            }
                         }
                     }
 
